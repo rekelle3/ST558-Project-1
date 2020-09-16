@@ -2,7 +2,7 @@
 title: "Project 1 Markdown"
 author: "Rachel Keller"
 date: "9/16/2020"
-output: pdf_document
+output: rmarkdown::github_document
 ---
 
 Install packages to connect to API.
