@@ -1,0 +1,210 @@
+---
+title: "Project 1 Markdown"
+author: "Rachel Keller"
+date: "9/16/2020"
+output: pdf_document
+---
+
+Install packages to connect to API.
+```{r, message = FALSE, warning = FALSE}
+library(httr)
+library(jsonlite)
+library(tidyverse)
+```
+
+Function to return franchise endpoint from records API.
+```{r}
+getFranchise <- function(teamName = NA, teamNumber = NA){
+  baseURLNHLRecords <- "https://records.nhl.com/site/api"
+  tableName <- "franchise"
+  fullURL <- paste0(baseURLNHLRecords, "/", tableName)
+  get <- GET(fullURL)
+  txt <- content(get, "text", encoding = "UTF-8")
+  json <- fromJSON(txt, flatten=TRUE)
+  if(is.na(teamName) & is.na(teamNumber)){
+    result <- json$data
+  }
+  else if (is.na(teamName)){
+    result <- json$data %>% mutate(fullName = paste(teamPlaceName, teamCommonName, sep = " ")) %>% filter(id == teamNumber)
+  }
+  else {
+    result <- json$data %>% mutate(fullName = paste(teamPlaceName, teamCommonName, sep = " ")) %>% filter(fullName == teamName)
+  }
+  return(result)
+}
+getFranchise(teamName = "Boston Bruins")
+getFranchise(teamNumber = 18)
+```
+
+Function to return franchise team totals endpoint from records API.
+```{r}
+getFranchiseTotals <- function(teamName = NA, teamNumber = NA){
+  baseURLNHLRecords <- "https://records.nhl.com/site/api"
+  tableName <- "franchise-team-totals "
+  fullURL <- paste0(baseURLNHLRecords, "/", tableName)
+  get <- GET(fullURL)
+  txt <- content(get, "text", encoding = "UTF-8")
+  json <- fromJSON(txt, flatten=TRUE)
+  if(is.na(teamName) & is.na(teamNumber)){
+    result <- json$data
+  }
+  else if (is.na(teamName)){
+    result <- json$data %>% filter(franchiseId == teamNumber)
+  }
+  else {
+    teamNameValue <- teamName
+    result <- json$data %>% filter(teamName == teamNameValue)
+  }
+  return(result)
+}
+getFranchiseTotals(teamName = "Boston Bruins")
+getFranchiseTotals(teamNumber = 18)
+```
+
+Function to return franchise season records endpoint from records API.
+```{r}
+getFranchiseSeasonRecords <- function(teamName = NA, teamNumber = NA){
+  baseURLNHLRecords <- "https://records.nhl.com/site/api"
+  tableName <- "franchise-season-records?cayenneExp=franchiseId="
+  if(is.na(teamName) & is.na(teamNumber)){
+    result <- "Error, need to specify a franchise ID or name. "
+  }
+  else if (is.na(teamName)){
+    id <- teamNumber
+    fullURL <- paste0(baseURLNHLRecords, "/", tableName, id)
+    get <- GET(fullURL)
+    txt <- content(get, "text", encoding = "UTF-8")
+    json <- fromJSON(txt, flatten=TRUE)
+    result <- json$data
+  }
+  else {
+    teamInfo <- getFranchise(teamName = teamName)
+    id <- teamInfo$id
+    fullURL <- paste0(baseURLNHLRecords, "/", tableName, id)
+    get <- GET(fullURL)
+    txt <- content(get, "text", encoding = "UTF-8")
+    json <- fromJSON(txt, flatten=TRUE)
+    result <- json$data
+  }
+  return(result)
+}
+getFranchiseSeasonRecords(teamName = "Boston Bruins")
+getFranchiseSeasonRecords(teamNumber = 18)
+```
+
+Function to return goalie season records endpoint from records API.
+```{r}
+getGoalieRecords <- function(teamName = NA, teamNumber = NA){
+  baseURLNHLRecords <- "https://records.nhl.com/site/api"
+  tableName <- "franchise-goalie-records?cayenneExp=franchiseId="
+  if(is.na(teamName) & is.na(teamNumber)){
+    result <- "Error, need to specify a franchise ID or name. "
+  }
+  else if (is.na(teamName)){
+    id <- teamNumber
+    fullURL <- paste0(baseURLNHLRecords, "/", tableName, id)
+    get <- GET(fullURL)
+    txt <- content(get, "text", encoding = "UTF-8")
+    json <- fromJSON(txt, flatten=TRUE)
+    result <- json$data
+  }
+  else {
+    teamInfo <- getFranchise(teamName = teamName)
+    id <- teamInfo$id
+    fullURL <- paste0(baseURLNHLRecords, "/", tableName, id)
+    get <- GET(fullURL)
+    txt <- content(get, "text", encoding = "UTF-8")
+    json <- fromJSON(txt, flatten=TRUE)
+    result <- json$data
+  }
+  return(result)
+}
+getGoalieRecords(teamName = "Boston Bruins")
+getGoalieRecords(teamNumber = 18)
+```
+
+Function to return skater season records endpoint from records API.
+```{r}
+getSkaterRecords <- function(teamName = NA, teamNumber = NA){
+  baseURLNHLRecords <- "https://records.nhl.com/site/api"
+  tableName <- "franchise-skater-records?cayenneExp=franchiseId="
+  if(is.na(teamName) & is.na(teamNumber)){
+    result <- "Error, need to specify a franchise ID or name. "
+  }
+  else if (is.na(teamName)){
+    id <- teamNumber
+    fullURL <- paste0(baseURLNHLRecords, "/", tableName, id)
+    get <- GET(fullURL)
+    txt <- content(get, "text", encoding = "UTF-8")
+    json <- fromJSON(txt, flatten=TRUE)
+    result <- json$data
+  }
+  else {
+    teamInfo <- getFranchise(teamName = teamName)
+    id <- teamInfo$id
+    fullURL <- paste0(baseURLNHLRecords, "/", tableName, id)
+    get <- GET(fullURL)
+    txt <- content(get, "text", encoding = "UTF-8")
+    json <- fromJSON(txt, flatten=TRUE)
+    result <- json$data
+  }
+  return(result)
+}
+getSkaterRecords(teamName = "Boston Bruins")
+getSkaterRecords(teamNumber = 18)
+```
+
+Connect to NHL stats API.
+```{r}
+getTeams <- function(teamName = NA, teamNumber = NA){
+  baseURLNHLStats <- "https://statsapi.web.nhl.com/api/v1"
+  tableName <- "teams"
+  fullURL <- paste0(baseURLNHLStats, "/", tableName)
+  get <- GET(fullURL)
+  txt <- content(get, "text")
+  json <- fromJSON(txt, flatten=TRUE)
+  if(is.na(teamName) & is.na(teamNumber)){
+    result <- json$teams
+  }
+  else if (is.na(teamName)){
+    result <- json$teams %>% filter(franchiseId == teamNumber)
+  }
+  else {
+    teamNameValue <- teamName
+    result <- json$teams %>% filter(name == teamNameValue)
+  }
+  return(result)
+}
+getTeams("Boston Bruins")
+getTeams(teamNumber = 18)
+```
+
+Now, we will create our wrapper function.
+```{r}
+getEndpoint <- function(endpoint, teamName = NA, teamNumber = NA){
+  if(endpoint == "franchise"){
+    result <- getFranchise(teamName, teamNumber)
+  } else if (endpoint == "franchise totals"){
+    result <- getFranchiseTotals(teamName, teamNumber)
+  } else if (endpoint == "franchise season records"){
+    result <- getFranchiseSeasonRecords(teamName, teamNumber)
+  } else if (endpoint == "goalie records"){
+    result <- getGoalieRecords(teamName, teamNumber)
+  } else if (endpoint == "skater records"){
+    result <- getSkaterRecords(teamName, teamNumber)
+  } else if (endpoint == "teams"){
+    result <- getTeams(teamName, teamNumber)
+  } else {
+    result <- "Error, incorrect endpoint."
+  }
+  return(result)
+}
+getEndpoint("franchise", "Boston Bruins")
+getEndpoint("franchise totals", "Boston Bruins")
+getEndpoint("franchise season records", "Boston Bruins")
+getEndpoint("goalie records", "Boston Bruins")
+getEndpoint("skater records", "Boston Bruins")
+getEndpoint("teams", "Boston Bruins")
+getEndpoint("Ummm", "Boston Bruins")
+```
+
