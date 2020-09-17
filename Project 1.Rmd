@@ -5,14 +5,22 @@ date: "9/16/2020"
 output: rmarkdown::github_document
 ---
 
-Install packages to connect to API.
+# Requred Packages
+
+Required packages for this vignette are `httr`, `jsonlite`, and `tidyverse`. We will now load in these packages. 
 ```{r, message = FALSE, warning = FALSE}
 library(httr)
 library(jsonlite)
 library(tidyverse)
 ```
 
-Function to return franchise endpoint from records API.
+# Functions
+
+In this section, we will create the functions that will contact the NHL Records API and NHL Stats API, and return parsed data for certain endpoints.
+
+## Franchise Endpoint
+
+The function below will return the franchise endpoint from the NHL Records API, given either the team name or team number/id.
 ```{r}
 getFranchise <- function(teamName = NA, teamNumber = NA){
   baseURLNHLRecords <- "https://records.nhl.com/site/api"
@@ -32,11 +40,11 @@ getFranchise <- function(teamName = NA, teamNumber = NA){
   }
   return(result)
 }
-getFranchise(teamName = "Boston Bruins")
-getFranchise(teamNumber = 18)
 ```
 
-Function to return franchise team totals endpoint from records API.
+## Franchise Team Totals
+
+The function below will return the franchise team totals endpoint from the NHL Records API, given either the team name or team number/id.
 ```{r}
 getFranchiseTotals <- function(teamName = NA, teamNumber = NA){
   baseURLNHLRecords <- "https://records.nhl.com/site/api"
@@ -57,11 +65,11 @@ getFranchiseTotals <- function(teamName = NA, teamNumber = NA){
   }
   return(result)
 }
-getFranchiseTotals(teamName = "Boston Bruins")
-getFranchiseTotals(teamNumber = 18)
 ```
 
-Function to return franchise season records endpoint from records API.
+## Franchise Season Records
+
+The function below will return the franchise season records endpoint from the NHL Records API, given either the team name or team number/id.
 ```{r}
 getFranchiseSeasonRecords <- function(teamName = NA, teamNumber = NA){
   baseURLNHLRecords <- "https://records.nhl.com/site/api"
@@ -88,11 +96,11 @@ getFranchiseSeasonRecords <- function(teamName = NA, teamNumber = NA){
   }
   return(result)
 }
-getFranchiseSeasonRecords(teamName = "Boston Bruins")
-getFranchiseSeasonRecords(teamNumber = 18)
 ```
 
-Function to return goalie season records endpoint from records API.
+## Franchise Goalie Records
+
+The function below will return the goalie records endpoint from the NHL Records API, given either the team name or team number/id.
 ```{r}
 getGoalieRecords <- function(teamName = NA, teamNumber = NA){
   baseURLNHLRecords <- "https://records.nhl.com/site/api"
@@ -119,11 +127,11 @@ getGoalieRecords <- function(teamName = NA, teamNumber = NA){
   }
   return(result)
 }
-getGoalieRecords(teamName = "Boston Bruins")
-getGoalieRecords(teamNumber = 18)
 ```
 
-Function to return skater season records endpoint from records API.
+## Franchise Skater Records
+
+The function below will return the skater records endpoint from the NHL Records API, given either the team name or team number/id.
 ```{r}
 getSkaterRecords <- function(teamName = NA, teamNumber = NA){
   baseURLNHLRecords <- "https://records.nhl.com/site/api"
@@ -150,11 +158,11 @@ getSkaterRecords <- function(teamName = NA, teamNumber = NA){
   }
   return(result)
 }
-getSkaterRecords(teamName = "Boston Bruins")
-getSkaterRecords(teamNumber = 18)
 ```
 
-Connect to NHL stats API.
+## Teams
+
+The function below will return the teams endpoint from the NHL Stats API, given either the team name or team number/id.
 ```{r}
 getTeams <- function(teamName = NA, teamNumber = NA){
   baseURLNHLStats <- "https://statsapi.web.nhl.com/api/v1"
@@ -175,11 +183,11 @@ getTeams <- function(teamName = NA, teamNumber = NA){
   }
   return(result)
 }
-getTeams("Boston Bruins")
-getTeams(teamNumber = 18)
 ```
 
-Now, we will create our wrapper function.
+## Wrapper
+
+Now, we will create our wrapper function. The user can select their desired endpoint. 
 ```{r}
 getEndpoint <- function(endpoint, teamName = NA, teamNumber = NA){
   if(endpoint == "franchise"){
@@ -199,12 +207,65 @@ getEndpoint <- function(endpoint, teamName = NA, teamNumber = NA){
   }
   return(result)
 }
-getEndpoint("franchise", "Boston Bruins")
-getEndpoint("franchise totals", "Boston Bruins")
-getEndpoint("franchise season records", "Boston Bruins")
-getEndpoint("goalie records", "Boston Bruins")
-getEndpoint("skater records", "Boston Bruins")
-getEndpoint("teams", "Boston Bruins")
-getEndpoint("Ummm", "Boston Bruins")
 ```
 
+# Exploratory Data Analysis
+
+Now that we have all of functions created to contact various endpoints in our APIs, we will begin exploring our data. 
+
+More likely to win a shootout
+Franchise totals data
+Create boxplot
+create new variable
+```{r, warning = FALSE}
+shootout <- getEndpoint("franchise totals") %>% mutate(propShootouts = shootoutWins / (shootoutWins + shootoutLosses), na.rm=TRUE)
+g <- ggplot(shootout, aes(X = teamName, y = propShootouts, fill = teamName))
+g + geom_boxplot()
+```
+
+Contingency table with home losses and road losses from franchise totals
+
+```{r}
+losses <- getEndpoint("franchise totals", teamName = "Washington Capitals")
+table(losses$gameTypeId, losses$points)
+```
+
+
+Grab division/conference from teams and wins from franchise totals and make bar plot of wins
+
+```{r}
+divisions <- getEndpoint("teams")
+joined <- full_join(divisions, shootout, by = "franchiseId")
+g <- ggplot(joined, aes(x = teamName.y))
+g + geom_bar() + facet_wrap(~conference)
+```
+
+
+Use skater records for capitals and make histogram of seasons
+Skater records data
+Histogram
+```{r}
+seasons <- getEndpoint("skater records", teamName = "Washington Capitals")
+g <- ggplot(seasons, aes(x = seasons))
+g + geom_histogram(binwidth = 3)
+```
+
+
+Use skater records for capitals and make histogram of seasons
+Goalie records data
+Histogram
+```{r}
+seasons <- getEndpoint("goalie records", teamName = "Washington Capitals")
+g <- ggplot(seasons, aes(x = seasons))
+g + geom_histogram(binwidth = 3)
+```
+
+
+Make scatterplot of with franchise season records of win streak vs loss streak
+
+```{r}
+winStreak <- getEndpoint("franchise season records", teamName = "Washington Capitals")
+```
+
+
+numerical summary of 
