@@ -1,7 +1,7 @@
 ---
 title: "Project 1 Markdown"
 author: "Rachel Keller"
-date: "9/16/2020"
+date: "September 18, 2020"
 output: rmarkdown::github_document
 ---
 
@@ -28,7 +28,7 @@ getFranchise <- function(teamName = NA, teamNumber = NA){
   fullURL <- paste0(baseURLNHLRecords, "/", tableName)
   get <- GET(fullURL)
   txt <- content(get, "text", encoding = "UTF-8")
-  json <- fromJSON(txt, flatten=TRUE)
+  json <- fromJSON(txt, flatten = TRUE)
   if(is.na(teamName) & is.na(teamNumber)){
     result <- json$data
   }
@@ -52,7 +52,7 @@ getFranchiseTotals <- function(teamName = NA, teamNumber = NA){
   fullURL <- paste0(baseURLNHLRecords, "/", tableName)
   get <- GET(fullURL)
   txt <- content(get, "text", encoding = "UTF-8")
-  json <- fromJSON(txt, flatten=TRUE)
+  json <- fromJSON(txt, flatten = TRUE)
   if(is.na(teamName) & is.na(teamNumber)){
     result <- json$data
   }
@@ -82,7 +82,7 @@ getFranchiseSeasonRecords <- function(teamName = NA, teamNumber = NA){
     fullURL <- paste0(baseURLNHLRecords, "/", tableName, id)
     get <- GET(fullURL)
     txt <- content(get, "text", encoding = "UTF-8")
-    json <- fromJSON(txt, flatten=TRUE)
+    json <- fromJSON(txt, flatten = TRUE)
     result <- json$data
   }
   else {
@@ -91,7 +91,7 @@ getFranchiseSeasonRecords <- function(teamName = NA, teamNumber = NA){
     fullURL <- paste0(baseURLNHLRecords, "/", tableName, id)
     get <- GET(fullURL)
     txt <- content(get, "text", encoding = "UTF-8")
-    json <- fromJSON(txt, flatten=TRUE)
+    json <- fromJSON(txt, flatten = TRUE)
     result <- json$data
   }
   return(result)
@@ -113,7 +113,7 @@ getGoalieRecords <- function(teamName = NA, teamNumber = NA){
     fullURL <- paste0(baseURLNHLRecords, "/", tableName, id)
     get <- GET(fullURL)
     txt <- content(get, "text", encoding = "UTF-8")
-    json <- fromJSON(txt, flatten=TRUE)
+    json <- fromJSON(txt, flatten = TRUE)
     result <- json$data
   }
   else {
@@ -122,7 +122,7 @@ getGoalieRecords <- function(teamName = NA, teamNumber = NA){
     fullURL <- paste0(baseURLNHLRecords, "/", tableName, id)
     get <- GET(fullURL)
     txt <- content(get, "text", encoding = "UTF-8")
-    json <- fromJSON(txt, flatten=TRUE)
+    json <- fromJSON(txt, flatten = TRUE)
     result <- json$data
   }
   return(result)
@@ -144,7 +144,7 @@ getSkaterRecords <- function(teamName = NA, teamNumber = NA){
     fullURL <- paste0(baseURLNHLRecords, "/", tableName, id)
     get <- GET(fullURL)
     txt <- content(get, "text", encoding = "UTF-8")
-    json <- fromJSON(txt, flatten=TRUE)
+    json <- fromJSON(txt, flatten = TRUE)
     result <- json$data
   }
   else {
@@ -153,7 +153,7 @@ getSkaterRecords <- function(teamName = NA, teamNumber = NA){
     fullURL <- paste0(baseURLNHLRecords, "/", tableName, id)
     get <- GET(fullURL)
     txt <- content(get, "text", encoding = "UTF-8")
-    json <- fromJSON(txt, flatten=TRUE)
+    json <- fromJSON(txt, flatten = TRUE)
     result <- json$data
   }
   return(result)
@@ -164,32 +164,101 @@ getSkaterRecords <- function(teamName = NA, teamNumber = NA){
 
 The function below will return the teams endpoint from the NHL Stats API, given either the team name or team number/id.
 ```{r}
-getTeams <- function(teamName = NA, teamNumber = NA){
+getTeams <- function(teamName = NA, teamNumber = NA, modifier = NA, modifierValue = NA){
   baseURLNHLStats <- "https://statsapi.web.nhl.com/api/v1"
   tableName <- "teams"
-  fullURL <- paste0(baseURLNHLStats, "/", tableName)
-  get <- GET(fullURL)
-  txt <- content(get, "text")
-  json <- fromJSON(txt, flatten=TRUE)
+  switch(modifier,
+             "Team Roster"={
+               modifierURL <- "?expand=team.roster"
+             }, "Person Names"={
+               modifierURL <- "?expand=person.names"
+             }, "Next Schedule"={
+               modifierURL <- "?expand=team.schedule.next"
+             }, "Previous Schedule"={
+               modifierURL <- "?expand=team.schedule.previous"
+             }, "Team Stats"={
+               modifierURL <- "?expand=team.stats"
+             }, "Season Roster"={
+               modifierURL <- paste0("?expand=team.roster&season=", modifierValue)
+             }, "Multiple Teams"={
+               modifierURL <- "?teamId="
+             }, "Single Season Stats"={
+               modifierURL <- "?stats=statsSingleSeasonPlayoffs"
+             })
   if(is.na(teamName) & is.na(teamNumber)){
+    fullURL <- paste0(baseURLNHLStats, "/", tableName)
+    get <- GET(fullURL)
+    txt <- content(get, "text")
+    json <- fromJSON(txt, flatten=TRUE)
     result <- json$teams
   }
   else if (is.na(teamName)){
-    result <- json$teams %>% filter(franchiseId == teamNumber)
+    fullURL <- paste0(baseURLNHLStats, "/", tableName)
+    get <- GET(fullURL)
+    txt <- content(get, "text")
+    json <- fromJSON(txt, flatten=TRUE)
+    if (is.na(modifier)){
+      result <- json$teams %>% filter(franchiseId == teamNumber)
+    } else {
+      getId <- json$teams %>% filter(franchiseId == teamNumber)
+      id <- getId$id
+      URLWithModifier <- paste0(baseURLNHLStats, "/", tableName, "/", id, modifierURL)
+      getModifier <- GET(URLWithModifier)
+      text <- content(getModifier, "text")
+      jsonFile <- fromJSON(text, flatten=TRUE)
+      if (modifier == "Team Roster"){
+        result <- jsonFile$teams$roster.roster
+      } else if (modifier == "Previous Schedule"){
+        result <- jsonFile$teams$previousGameSchedule.dates
+      } else if (modifier == "Team Stats"){
+        result <- jsonFile$teams$teamStats
+      } else if (modifier == "Season Roster"){
+        result <- jsonFile$teams$roster.roster
+      }
+      else {
+        result <- jsonFile$teams
+      }
+    }
   }
   else {
+    fullURL <- paste0(baseURLNHLStats, "/", tableName)
+    get <- GET(fullURL)
+    txt <- content(get, "text")
+    json <- fromJSON(txt, flatten=TRUE)
     teamNameValue <- teamName
-    result <- json$teams %>% filter(name == teamNameValue)
+    if (is.na(modifier)){
+      result <- json$teams %>% filter(name == teamNameValue)
+    } else {
+      getId <- json$teams %>% filter(name == teamNameValue)
+      id <- getId$id
+      URLWithModifier <- paste0(baseURLNHLStats, "/", tableName, "/", id, modifierURL)
+      getModifier <- GET(URLWithModifier)
+      text <- content(getModifier, "text")
+      jsonFile <- fromJSON(text, flatten=TRUE)
+      if (modifier == "Team Roster"){
+        result <- jsonFile$teams$roster.roster
+      } else if (modifier == "Previous Schedule"){
+        result <- jsonFile$teams$previousGameSchedule.dates
+      } else if (modifier == "Team Stats"){
+        result <- jsonFile$teams$teamStats
+      } else if (modifier == "Season Roster"){
+        result <- jsonFile$teams$roster.roster
+      }
+      else {
+        result <- jsonFile$teams
+      }
+    }
   }
   return(result)
 }
 ```
 
+
 ## Wrapper
 
 Now, we will create our wrapper function. The user can select their desired endpoint. 
 ```{r}
-getEndpoint <- function(endpoint, teamName = NA, teamNumber = NA){
+getEndpoint <- function(endpoint, teamName = NA, teamNumber = NA, modifier = NA, modifierValue = NA){
   if(endpoint == "franchise"){
     result <- getFranchise(teamName, teamNumber)
   } else if (endpoint == "franchise totals"){
@@ -201,7 +270,7 @@ getEndpoint <- function(endpoint, teamName = NA, teamNumber = NA){
   } else if (endpoint == "skater records"){
     result <- getSkaterRecords(teamName, teamNumber)
   } else if (endpoint == "teams"){
-    result <- getTeams(teamName, teamNumber)
+    result <- getTeams(teamName, teamNumber, modifier, modifierValue)
   } else {
     result <- "Error, incorrect endpoint."
   }
@@ -213,6 +282,8 @@ getEndpoint <- function(endpoint, teamName = NA, teamNumber = NA){
 
 Now that we have all of functions created to contact various endpoints in our APIs, we will begin exploring our data. 
 
+We'll begin by doing some analysis for the NHL overall, then dive into specific details the Washington Capitals. Examin some metrics that could indicate good team performance. 
+
 More likely to win a shootout
 Franchise totals data
 Create boxplot
@@ -223,23 +294,34 @@ g <- ggplot(shootout, aes(X = teamName, y = propShootouts, fill = teamName))
 g + geom_boxplot()
 ```
 
-Contingency table with home losses and road losses from franchise totals
+
+Bar graph of home wins by division
+```{r}
+teamInfo <- getEndpoint("teams")
+joined <- right_join(teamInfo, shootout, by = "franchiseId")
+g <- ggplot(joined, aes(name, homeWins))
+g + geom_bar(stat = "identity") + facet_grid(~division.name) + coord_flip()
+```
+
+Road wins by division
+```{r}
+teamInfo <- getEndpoint("teams")
+joined <- right_join(teamInfo, shootout, by = "franchiseId")
+g <- ggplot(joined, aes(name, roadWins))
+g + geom_bar(stat = "identity") + facet_grid(~division.name) + coord_flip()
+```
 
 ```{r}
-losses <- getEndpoint("franchise totals", teamName = "Washington Capitals")
-table(losses$gameTypeId, losses$points)
+joined %>% filter(gameTypeId == 2) %>% group_by(name) %>% summarise(avgPoints = mean(points))
+joined %>% filter(gameTypeId == 2) %>% group_by(division.name) %>% summarise(avgPoints = mean(points))
 ```
 
 
-Grab division/conference from teams and wins from franchise totals and make bar plot of wins
-
+average points per game in regular season
 ```{r}
-divisions <- getEndpoint("teams")
-joined <- full_join(divisions, shootout, by = "franchiseId")
-g <- ggplot(joined, aes(x = teamName.y))
-g + geom_bar() + facet_wrap(~conference)
+joined %>% filter(gameTypeId == 2) %>% mutate(avgPoints = points / gamesPlayed, na.rm=TRUE) %>% group_by(division.name) %>% summarise(avg = mean(avgPoints), med = median(avgPoints), var = var(avgPoints))
+joined %>% filter(gameTypeId == 2) %>% mutate(avgPoints = points / gamesPlayed, na.rm=TRUE) %>% group_by(name) %>% summarise(avg = mean(avgPoints))
 ```
-
 
 Use skater records for capitals and make histogram of seasons
 Skater records data
@@ -261,11 +343,47 @@ g + geom_histogram(binwidth = 3)
 ```
 
 
-Make scatterplot of with franchise season records of win streak vs loss streak
-
 ```{r}
-winStreak <- getEndpoint("franchise season records", teamName = "Washington Capitals")
+seasons <- getEndpoint("skater records", teamName = "Washington Capitals")
+g <- ggplot(seasons, aes(x = mostPointsOneSeason, y = mostPointsOneGame))
+g + geom_point()+ facet_wrap(~activePlayer)
 ```
 
 
-numerical summary of 
+Make scatterplot of with franchise season records of win streak vs loss streak
+
+```{r}
+seasons <- getEndpoint("goalie records", teamName = "Washington Capitals")
+g <- ggplot(seasons, aes(x = mostShotsAgainstOneGame, y = mostSavesOneGame))
+g + geom_point() + facet_wrap(~activePlayer)
+```
+
+
+contingency table of active players
+```{r}
+seasons <- getEndpoint("skater records", teamName = "Washington Capitals")
+table(seasons$activePlayer)
+```
+
+contingency table of active goalies
+```{r}
+seasons <- getEndpoint("goalie records", teamName = "Washington Capitals")
+table(seasons$activePlayer)
+```
+```{r}
+positions <- getEndpoint("teams", teamName = "Washington Capitals", modifier = "Team Roster")
+table(positions[[1]][["position.name"]])
+```
+
+```{r}
+seasons <- getEndpoint("skater records", teamName = "Washington Capitals")
+g <- ggplot(seasons, aes(x = seasons, y = points, group = seasons))
+g + geom_boxplot()
+```
+
+```{r}
+seasons <- getEndpoint("skater records", teamName = "Washington Capitals")
+g <- ggplot(seasons, aes(x = seasons, y = penaltyMinutes, group = seasons))
+g + geom_boxplot()
+```
+
