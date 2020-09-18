@@ -6,7 +6,7 @@ output: rmarkdown::github_document
 
 ---
 
-# Table of Contents
+# Table of Contents 
 
 * Required Packages
 * Functions
