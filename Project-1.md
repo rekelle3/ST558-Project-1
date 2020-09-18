@@ -3,6 +3,8 @@ Project 1 Markdown
 Rachel Keller
 September 18, 2020
 
+Note to add TOC
+
 Requred Packages
 ================
 
