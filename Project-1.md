@@ -392,7 +392,7 @@ with the overall points by team, division, and conference.
     conferences <- getEndpoint("teams") %>% rename(teamId = id)
     points <- getEndpoint("franchise totals") %>% filter(gameTypeId == 2)
     conferencesPoints <- right_join(conferences, points, by = "teamId")
-    conferencesPoints %>% group_by(name) %>% summarise(pointsEarned = points) %>% filter(!is.na(name))
+    conferencesPoints %>% group_by(name) %>% summarise(pointsEarned = points) %>% filter(!is.na(name)) %>% print(n = nrow(.))
 
     ## # A tibble: 31 x 2
     ## # Groups:   name [31]
@@ -408,7 +408,27 @@ with the overall points by team, division, and conference.
     ##  8 Colorado Avalanche            2175
     ##  9 Columbus Blue Jackets         1500
     ## 10 Dallas Stars                  2395
-    ## # ... with 21 more rows
+    ## 11 Detroit Red Wings             6690
+    ## 12 Edmonton Oilers               3295
+    ## 13 Florida Panthers              2049
+    ## 14 Los Angeles Kings             4048
+    ## 15 Minnesota Wild                1652
+    ## 16 Montréal Canadiens            7899
+    ## 17 Nashville Predators           1863
+    ## 18 New Jersey Devils             3131
+    ## 19 New York Islanders            3818
+    ## 20 New York Rangers              6667
+    ## 21 Ottawa Senators               2175
+    ## 22 Philadelphia Flyers           4740
+    ## 23 Pittsburgh Penguins           4263
+    ## 24 San Jose Sharks               2375
+    ## 25 St. Louis Blues               4394
+    ## 26 Tampa Bay Lightning           2157
+    ## 27 Toronto Maple Leafs           6616
+    ## 28 Vancouver Canucks             3798
+    ## 29 Vegas Golden Knights           288
+    ## 30 Washington Capitals           3789
+    ## 31 Winnipeg Jets                  776
 
     conferencesPoints %>% group_by(division.name) %>% summarise(sumPointsEarned = sum(points)) %>% filter(!is.na(division.name))
 
@@ -439,7 +459,7 @@ Now that we have looked at points as a whole, we will look at the
 average points per game in regular season by team, division, and
 conference.
 
-    conferencesPoints %>% mutate(avgPoints = points / gamesPlayed) %>% group_by(name) %>% summarise(avg = mean(avgPoints)) %>% filter(!is.na(name))
+    conferencesPoints %>% mutate(avgPoints = points / gamesPlayed) %>% group_by(name) %>% summarise(avg = mean(avgPoints)) %>% filter(!is.na(name)) %>% print(n = nrow(.))
 
     ## # A tibble: 31 x 2
     ##    name                    avg
@@ -454,7 +474,27 @@ conference.
     ##  8 Colorado Avalanche    1.13 
     ##  9 Columbus Blue Jackets 0.992
     ## 10 Dallas Stars          1.17 
-    ## # ... with 21 more rows
+    ## 11 Detroit Red Wings     1.07 
+    ## 12 Edmonton Oilers       1.04 
+    ## 13 Florida Panthers      0.998
+    ## 14 Los Angeles Kings     0.983
+    ## 15 Minnesota Wild        1.09 
+    ## 16 Montréal Canadiens    1.17 
+    ## 17 Nashville Predators   1.11 
+    ## 18 New Jersey Devils     1.07 
+    ## 19 New York Islanders    1.02 
+    ## 20 New York Rangers      1.03 
+    ## 21 Ottawa Senators       1.02 
+    ## 22 Philadelphia Flyers   1.15 
+    ## 23 Pittsburgh Penguins   1.04 
+    ## 24 San Jose Sharks       1.07 
+    ## 25 St. Louis Blues       1.07 
+    ## 26 Tampa Bay Lightning   1.01 
+    ## 27 Toronto Maple Leafs   1.02 
+    ## 28 Vancouver Canucks     0.977
+    ## 29 Vegas Golden Knights  1.23 
+    ## 30 Washington Capitals   1.06 
+    ## 31 Winnipeg Jets         1.12
 
     conferencesPoints %>% mutate(avgPoints = points / gamesPlayed) %>% filter(!is.na(name)) %>% group_by(division.name) %>% summarise(avg = mean(avgPoints), med = median(avgPoints), var = var(avgPoints))
 
@@ -493,10 +533,11 @@ conference.
     g <- ggplot(teamInfoTotals, aes(name, homeWins, fill = conference.name))
     g + geom_bar(stat = "identity") + facet_grid(~conference.name) + coord_flip() + labs(y = "Number of Wins at Home", x = "Team Name", title = "Bar Plot of Home Wins by Conference", fill = "Conference")
 
-![](Project-1_files/figure-gfm/unnamed-chunk-12-1.png)<!-- --> In the
-Eastern conference, the Montréal Canadiens have the largest number of
-wins at home. And in the Western conference, the Chicago Blackhawks have
-the largest number of home wins.
+![](Project-1_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+In the Eastern conference, the Montréal Canadiens have the largest
+number of wins at home. And in the Western conference, the Chicago
+Blackhawks have the largest number of home wins.
 
 Staying on the topic of wins, we will now look at a bar plot of road
 wins by conference.
@@ -504,10 +545,11 @@ wins by conference.
     g <- ggplot(teamInfoTotals, aes(name, roadWins, fill = conference.name))
     g + geom_bar(stat = "identity") + facet_grid(~conference.name) + coord_flip() + labs(y = "Number of Wins on the Road", x = "Team Name", title = "Bar Plot of Road Wins by Conference", fill = "Conference")
 
-![](Project-1_files/figure-gfm/unnamed-chunk-13-1.png)<!-- --> Not
-surprisingly, the Montréal Canadiens have the largest number of wins on
-the road for the Eastern conference. Also, the Chicago Blackhawks have
-the largest number of road wins for the Western conference.
+![](Project-1_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+Not surprisingly, the Montréal Canadiens have the largest number of wins
+on the road for the Eastern conference. Also, the Chicago Blackhawks
+have the largest number of road wins for the Western conference.
 
 The last performance metric we will analyze are shootouts. We will take
 a look at the distribution of the proportion of shootouts won, for both
@@ -517,12 +559,13 @@ regular and post season.
     g <- ggplot(shootout, aes(X = teamName, y = propShootouts, fill = teamName))
     g + geom_boxplot() + labs(x = "Team", y = "Proportion of Successful Shootouts", title = "Bar Plot of Shootouts")
 
-![](Project-1_files/figure-gfm/unnamed-chunk-14-1.png)<!-- --> We can
-see that the vast majority of teams hover around the 0.5 mark. However,
-4 teams have distributions that span from 0.5 to 1, and from 0 to 0.5.
-These teams, the Washington Capitals, Tampa Bay Lighting, St. Louis
-Blues, and Dallas Stars have either won or lost all of their shootouts
-in the post season.
+![](Project-1_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+We can see that the vast majority of teams hover around the 0.5 mark.
+However, 4 teams have distributions that span from 0.5 to 1, and from 0
+to 0.5. These teams, the Washington Capitals, Tampa Bay Lighting,
+St. Louis Blues, and Dallas Stars have either won or lost all of their
+shootouts in the post season.
 
 Washington Capitals Analysis
 ----------------------------
